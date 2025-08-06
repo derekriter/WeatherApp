@@ -45,11 +45,19 @@ class Temperature {
     return [..._fahrenheitIDs, ..._celsiusIDs, ..._kelvinIDs].contains(unitID);
   }
 
-  double get fahrenheit => _universalVal * 1.8 + 32;
+  num fahrenheit([int precision = 0]) {
+    final fac = pow(10, precision);
+
+    return ((_universalVal * 1.8 + 32) / fac).round() * fac;
+  }
+
   double get celsius => _universalVal;
   double get kelvin => _universalVal + 273;
 
-  String get fahrenheitString => "$fahrenheit$fahrenheitSuffix";
+  String fahrenheitString([int precision = 0]) {
+    return "${fahrenheit(precision)}$fahrenheitSuffix";
+  }
+
   String get celsiusString => "$celsius$celsiusSuffix";
   String get kelvinString => "$kelvin$kelvinSuffix";
 

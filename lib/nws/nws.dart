@@ -1,12 +1,13 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:weather_app/data/utils.dart';
 import 'package:weather_app/nws/nws_weather.dart';
 import 'package:weather_app/data/units.dart';
 
 const String userAgent = "derekriter08@gmail.com";
 
-Future<(int gridX, int gridY, String officeID)> getGridFromPoint(
+Future<({int gridX, int gridY, String officeID})> getGridFromPoint(
   double latX,
   double latY,
 ) async {
@@ -44,10 +45,18 @@ Future<(int gridX, int gridY, String officeID)> getGridFromPoint(
     throw Exception("Argument 'gridId' should be a String");
   }
 
-  return (json["gridX"] as int, json["gridY"] as int, json["gridId"] as String);
+  return (
+    gridX: json["gridX"] as int,
+    gridY: json["gridY"] as int,
+    officeID: json["gridId"] as String,
+  );
 }
 
-void getGridWeather(int gridX, int gridY, String officeID) async {
+Future<GridWeatherInfo> getGridWeather(
+  int gridX,
+  int gridY,
+  String officeID,
+) async {
   final resp = await http.get(
     Uri.parse("https://api.weather.gov/gridpoints/$officeID/$gridX,$gridY"),
     headers: {"User-Agent": userAgent, "Accept": "application/ld+json"},
@@ -69,62 +78,67 @@ void getGridWeather(int gridX, int gridY, String officeID) async {
     throw Exception("API Error, expected json object");
   }
 
-  final Map<TimeInterval, Temperature>? temperature = _parseTimedSet(
+  final TemperatureMap? temperature = _parseTimedSet(
     json,
     "temperature",
     _parseTemperatureSet,
   );
-  final Map<TimeInterval, Temperature>? dewpoint = _parseTimedSet(
+  final TemperatureMap? dewpoint = _parseTimedSet(
     json,
     "dewpoint",
     _parseTemperatureSet,
   );
-  final Map<TimeInterval, Temperature>? maxTemperature = _parseTimedSet(
+  final TemperatureMap? maxTemperature = _parseTimedSet(
     json,
     "maxTemperature",
     _parseTemperatureSet,
   );
-  final Map<TimeInterval, Temperature>? minTemperature = _parseTimedSet(
+  final TemperatureMap? minTemperature = _parseTimedSet(
     json,
     "minTemperature",
     _parseTemperatureSet,
   );
-  final Map<TimeInterval, Fraction>? relativeHumidity = _parseTimedSet(
+  final FractionMap? relativeHumidity = _parseTimedSet(
     json,
     "relativeHumidity",
     _parseFractionSet,
   );
-  final Map<TimeInterval, Temperature>? apparentTemperature = _parseTimedSet(
+  final TemperatureMap? apparentTemperature = _parseTimedSet(
     json,
     "apparentTemperature",
     _parseTemperatureSet,
   );
-  final Map<TimeInterval, Fraction>? skyCover = _parseTimedSet(
+  final FractionMap? skyCover = _parseTimedSet(
     json,
     "skyCover",
     _parseFractionSet,
   );
-  final Map<TimeInterval, Angle>? windDirection = _parseTimedSet(
+  final AngleMap? windDirection = _parseTimedSet(
     json,
     "windDirection",
     _parseAngleSet,
   );
-  final Map<TimeInterval, Speed>? windSpeed = _parseTimedSet(
-    json,
-    "windSpeed",
-    _parseSpeedSet,
-  );
-  final Map<TimeInterval, Speed>? windGust = _parseTimedSet(
-    json,
-    "windGust",
-    _parseSpeedSet,
-  );
+  final SpeedMap? windSpeed = _parseTimedSet(json, "windSpeed", _parseSpeedSet);
+  final SpeedMap? windGust = _parseTimedSet(json, "windGust", _parseSpeedSet);
   // final Map<TimeInterval, Weather>? weather = _parseTimedSet(
   //   json,
   //   "weather",
   //   _parseWeatherSet,
   // );
   //TODO finish parsing weather data
+
+  return (
+    temperature: temperature,
+    dewpoint: dewpoint,
+    maxTemperature: maxTemperature,
+    minTemperature: minTemperature,
+    relativeHumidity: relativeHumidity,
+    apparentTemperature: apparentTemperature,
+    skyCover: skyCover,
+    windDirection: windDirection,
+    windSpeed: windSpeed,
+    windGust: windGust,
+  );
 }
 
 Map<TimeInterval, T>? _parseTimedSet<T>(
@@ -234,9 +248,7 @@ Map<TimeInterval, T>? _parseTimedNumberValues<T>(
   });
 }
 
-Map<TimeInterval, Temperature>? _parseTemperatureSet(
-  Map<String, dynamic> setJson,
-) {
+TemperatureMap? _parseTemperatureSet(Map<String, dynamic> setJson) {
   final uom = _parseUOM(setJson, "temperature", Temperature.isValidID);
   if (uom == null) {
     return null;
@@ -250,7 +262,7 @@ Map<TimeInterval, Temperature>? _parseTemperatureSet(
   );
 }
 
-Map<TimeInterval, Fraction>? _parseFractionSet(Map<String, dynamic> setJson) {
+FractionMap? _parseFractionSet(Map<String, dynamic> setJson) {
   final uom = _parseUOM(setJson, "fraction", Fraction.isValidID);
   if (uom == null) {
     return null;
@@ -259,7 +271,7 @@ Map<TimeInterval, Fraction>? _parseFractionSet(Map<String, dynamic> setJson) {
   return _parseTimedNumberValues(setJson, "fraction", uom, Fraction.fromUnitID);
 }
 
-Map<TimeInterval, Angle>? _parseAngleSet(Map<String, dynamic> setJson) {
+AngleMap? _parseAngleSet(Map<String, dynamic> setJson) {
   final uom = _parseUOM(setJson, "angle", Angle.isValidID);
   if (uom == null) {
     return null;
@@ -268,7 +280,7 @@ Map<TimeInterval, Angle>? _parseAngleSet(Map<String, dynamic> setJson) {
   return _parseTimedNumberValues(setJson, "angle", uom, Angle.fromUnitID);
 }
 
-Map<TimeInterval, Speed>? _parseSpeedSet(Map<String, dynamic> setJson) {
+SpeedMap? _parseSpeedSet(Map<String, dynamic> setJson) {
   final uom = _parseUOM(setJson, "speed", Speed.isValidID);
   if (uom == null) {
     return null;
