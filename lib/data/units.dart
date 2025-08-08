@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/material.dart';
 import 'package:iso_duration/iso_duration.dart';
 
 class Temperature {
@@ -80,7 +81,7 @@ class Time {
 
     DateTime? parsed = DateTime.tryParse(raw);
     if (parsed == null) {
-      print("Invalid time '$raw'");
+      debugPrint("Invalid time '$raw'");
       return null;
     }
 
@@ -112,7 +113,7 @@ class TimeInterval {
     Duration? parseDuration(String rawChunk) {
       Duration? parsed = tryParseIso8601Duration(rawChunk, zeroAsNull: false);
       if (parsed == null) {
-        print("Invalid duration '$rawChunk'");
+        debugPrint("Invalid duration '$rawChunk'");
       }
 
       return parsed;
@@ -120,14 +121,14 @@ class TimeInterval {
 
     final chunks = raw.split("/");
     if (chunks.length != 2) {
-      print("Invalid internval '$raw'");
+      debugPrint("Invalid internval '$raw'");
       return null;
     }
 
     if (chunks[0].startsWith("P")) {
       if (chunks[1].startsWith("P")) {
         //invalid format duration/duration
-        print("Invalid interval '$raw'");
+        debugPrint("Invalid interval '$raw'");
         return null;
       }
 
@@ -135,7 +136,7 @@ class TimeInterval {
       final endTime = Time.fromIso8601String(chunks[1]);
 
       if (duration == null || endTime == null) {
-        print("Invalid interval '$raw'");
+        debugPrint("Invalid interval '$raw'");
         return null;
       }
 
@@ -150,7 +151,7 @@ class TimeInterval {
         final duration = parseDuration(chunks[1]);
 
         if (startTime == null || duration == null) {
-          print("Invalid interval '$raw'");
+          debugPrint("Invalid interval '$raw'");
           return null;
         }
 
@@ -162,7 +163,7 @@ class TimeInterval {
         final endTime = Time.fromIso8601String(chunks[1]);
 
         if (startTime == null || endTime == null) {
-          print("Invalid interval '$raw'");
+          debugPrint("Invalid interval '$raw'");
           return null;
         }
 

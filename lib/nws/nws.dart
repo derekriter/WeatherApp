@@ -1,48 +1,64 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:weather_app/data/utils.dart';
 import 'package:weather_app/nws/nws_weather.dart';
 import 'package:weather_app/data/units.dart';
 
-const String userAgent = "derekriter08@gmail.com";
+const String userAgent = "(derekriter.github.io derekriter08@gmail.com)";
+
+String _genAPIError(String msg, Uri uri, http.Response resp) {
+  return "API Error: $msg\nStatus Code: ${resp.statusCode}\nURI: '$uri'\nBody:\n${resp.body}";
+}
+
+//TODO cache data so the NWS servers don't get spammed
 
 Future<({int gridX, int gridY, String officeID})> getGridFromPoint(
-  double latX,
-  double latY,
+  double lat,
+  double long,
 ) async {
+  //api doesn't want more than 4 decimals places, will cause unexpected functionality if not followed
+  //https://weather-gov.github.io/api/general-faqs#:~:text=Please%20note%20that,be%20close%0Aenough!
+  final uri = Uri.parse(
+    "https://api.weather.gov/points/${lat.toStringAsFixed(4)},${long.toStringAsFixed(4)}",
+  );
   final resp = await http.get(
-    Uri.parse("https://api.weather.gov/points/$latX,$latY"),
+    uri,
     headers: {"User-Agent": userAgent, "Accept": "application/ld+json"},
   );
 
   if (resp.statusCode != 200) {
-    throw Exception(
-      "API Error\nStatus Code: ${resp.statusCode}\nBody: ${resp.body}",
-    );
+    return Future.error(_genAPIError("bad response", uri, resp));
   }
 
   final json = jsonDecode(resp.body);
   if (json == null) {
-    throw Exception("API Error, no json content returned");
+    return Future.error(_genAPIError("no json content returned", uri, resp));
   }
   if (json is! Map<String, dynamic>) {
-    throw Exception("API Error, expected json object");
+    return Future.error(_genAPIError("expected json object", uri, resp));
   }
   if (!json.containsKey("gridX")) {
-    throw Exception("Missing argument 'gridX'");
+    return Future.error(_genAPIError("missing argument 'gridX'", uri, resp));
   } else if (json["gridX"] is! int) {
-    throw Exception("Argument 'gridX' should be an int");
+    return Future.error(
+      _genAPIError("argument 'gridX' should be an int", uri, resp),
+    );
   }
   if (!json.containsKey("gridY")) {
-    throw Exception("Missing argument 'gridY'");
+    return Future.error(_genAPIError("missing argument 'gridY'", uri, resp));
   } else if (json["gridY"] is! int) {
-    throw Exception("Argument 'gridY' should be an int");
+    return Future.error(
+      _genAPIError("argument 'gridY' should be an int", uri, resp),
+    );
   }
   if (!json.containsKey("gridId")) {
-    throw Exception("Missing argument 'gridId'");
+    return Future.error(_genAPIError("missing argument 'gridId'", uri, resp));
   } else if (json["gridId"] is! String) {
-    throw Exception("Argument 'gridId' should be a String");
+    return Future.error(
+      _genAPIError("argument 'gridId' should be a String", uri, resp),
+    );
   }
 
   return (
@@ -57,25 +73,24 @@ Future<GridWeatherInfo> getGridWeather(
   int gridY,
   String officeID,
 ) async {
+  final uri = Uri.parse(
+    "https://api.weather.gov/gridpoints/$officeID/$gridX,$gridY",
+  );
   final resp = await http.get(
-    Uri.parse("https://api.weather.gov/gridpoints/$officeID/$gridX,$gridY"),
+    uri,
     headers: {"User-Agent": userAgent, "Accept": "application/ld+json"},
   );
 
   if (resp.statusCode != 200) {
-    throw Exception(
-      "API Error\nStatus Code: ${resp.statusCode}\nBody: ${resp.body}",
-    );
+    return Future.error(_genAPIError("bad response", uri, resp));
   }
-
-  // print(resp.body);
 
   final json = jsonDecode(resp.body);
   if (json == null) {
-    throw Exception("API Error, no json content returned");
+    return Future.error(_genAPIError("no json content returned", uri, resp));
   }
   if (json is! Map<String, dynamic>) {
-    throw Exception("API Error, expected json object");
+    return Future.error(_genAPIError("expected json object", uri, resp));
   }
 
   final TemperatureMap? temperature = _parseTimedSet(
@@ -148,9 +163,9 @@ Map<TimeInterval, T>? _parseTimedSet<T>(
 ) {
   if (weatherJson[setName] is! Map<String, dynamic>) {
     if (!weatherJson.containsKey(setName)) {
-      print("No $setName");
+      debugPrint("No $setName");
     } else {
-      print("$setName should be an object");
+      debugPrint("$setName should be an object");
     }
     return null;
   }
@@ -164,16 +179,16 @@ String? _parseUOM(
   bool Function(String uom) validator,
 ) {
   if (!setJson.containsKey("uom")) {
-    print("No uom in $setType set");
+    debugPrint("No uom in $setType set");
     return null;
   }
   if (setJson["uom"] is! String) {
-    print("uom in $setType set should be a String");
+    debugPrint("uom in $setType set should be a String");
     return null;
   }
   final uom = setJson["uom"] as String; //unit of measurement
   if (!validator(uom)) {
-    print("Invalid uom '$uom' in $setType set");
+    debugPrint("Invalid uom '$uom' in $setType set");
     return null;
   }
 
@@ -186,11 +201,11 @@ Map<TimeInterval, T>? _parseTimedValues<T>(
   T? Function(dynamic raw) parser,
 ) {
   if (!setJson.containsKey("values")) {
-    print("No values in $setType set");
+    debugPrint("No values in $setType set");
     return null;
   }
   if (setJson["values"] is! List<dynamic>) {
-    print("values in $setType set should be a list");
+    debugPrint("values in $setType set should be a list");
     return null;
   }
 
@@ -198,33 +213,35 @@ Map<TimeInterval, T>? _parseTimedValues<T>(
   final values = setJson["values"] as List<dynamic>;
   for (final reading in values) {
     if (reading is! Map<String, dynamic>) {
-      print("Invalid $setType set reading '$reading'");
+      debugPrint("Invalid $setType set reading '$reading'");
       continue;
     }
 
     if (!reading.containsKey("validTime")) {
-      print("Missing validTime in $setType set reading '$reading'");
+      debugPrint("Missing validTime in $setType set reading '$reading'");
       continue;
     }
     if (reading["validTime"] is! String) {
-      print("validTime should be a String in $setType set reading '$reading'");
+      debugPrint(
+        "validTime should be a String in $setType set reading '$reading'",
+      );
       continue;
     }
     final validTime = TimeInterval.fromIso8601String(
       reading["validTime"] as String,
     );
     if (validTime == null) {
-      print("Invalid time interval in $setType set reading '$reading'");
+      debugPrint("Invalid time interval in $setType set reading '$reading'");
       continue;
     }
 
     if (!reading.containsKey("value")) {
-      print("Missing value in $setType set reading '$reading'");
+      debugPrint("Missing value in $setType set reading '$reading'");
       continue;
     }
     final parsedVal = parser(reading["value"]);
     if (parsedVal == null) {
-      print("Failed to parse value in $setType set reading '$reading'");
+      debugPrint("Failed to parse value in $setType set reading '$reading'");
       continue;
     }
 
@@ -293,16 +310,16 @@ Map<TimeInterval, Weather>? _parseWeatherSet(Map<String, dynamic> setJson) {
   //TODO finish parsing weather
   return _parseTimedValues(setJson, "weather", (raw) {
     if (raw is! List<dynamic>) {
-      print("value in weather set should be a list");
+      debugPrint("value in weather set should be a list");
       return null;
     }
     for (final obj in raw) {
       if (obj == null) {
-        print("Null value in weather set");
+        debugPrint("Null value in weather set");
         continue;
       }
       if (obj is! Map<String, dynamic>) {
-        print("value in weather set should be an object");
+        debugPrint("value in weather set should be an object");
         continue;
       }
     }

@@ -1,3 +1,4 @@
+import 'package:geolocator/geolocator.dart';
 import 'package:weather_app/data/units.dart';
 
 T? findValueFromTimedData<T>(Map<TimeInterval, T> map, Time time) {
@@ -10,6 +11,30 @@ T? findValueFromTimedData<T>(Map<TimeInterval, T> map, Time time) {
   }
 
   return null;
+}
+
+Future<Position> getGeolocation() async {
+  final enabled = await Geolocator.isLocationServiceEnabled();
+  if (!enabled) {
+    return Future.error("Location services are not enabled");
+  }
+
+  var permission = await Geolocator.checkPermission();
+  switch (permission) {
+    case LocationPermission.unableToDetermine:
+      return Future.error("Unable to determine location permissions");
+    case LocationPermission.deniedForever:
+      return Future.error("Access to location services are permanetly denied");
+    case LocationPermission.denied:
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error("Access to location services where denied");
+      }
+    default:
+      break;
+  }
+
+  return await Geolocator.getCurrentPosition();
 }
 
 typedef TemperatureMap = Map<TimeInterval, Temperature>;

@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:weather_app/data/units.dart';
 import 'package:weather_app/data/utils.dart';
 import 'package:weather_app/main.dart';
+import 'package:weather_app/widgets/current_weather.dart';
+import 'package:weather_app/widgets/location_header.dart';
 
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
@@ -12,6 +14,9 @@ class MainPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
 
+    if (appState.errorMsg != null) {
+      return SingleChildScrollView(child: Text(appState.errorMsg!));
+    }
     if (appState.gridWeather == null) {
       return Center(child: Text("Loading"));
     }
@@ -44,9 +49,25 @@ class MainPage extends StatelessWidget {
       ],
     );
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: temperatureWidget,
+    return Column(
+      children: [
+        Expanded(flex: 1, child: LocationHeader()),
+        Expanded(
+          flex: 2,
+          child: Column(
+            children: [
+              CurrentWeather(),
+              Text(
+                "${appState.geoLoc!.latitude}, ${appState.geoLoc!.longitude}",
+              ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: temperatureWidget,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

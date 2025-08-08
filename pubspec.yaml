@@ -1,5 +1,5 @@
 name: weather_app
-description: "A new Flutter project."
+description: "A custom weather app/website that pulls from the National Weather Service"
 publish_to: 'none'
 version: 0.1.0
 
@@ -13,6 +13,7 @@ dependencies:
   iso_duration: ^0.1.1
   provider: ^6.1.5
   intl: ^0.20.2
+  geolocator: ^14.0.2
 
 dev_dependencies:
   flutter_test:

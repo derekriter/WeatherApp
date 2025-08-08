@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/data/utils.dart';
 import 'package:weather_app/nws/nws.dart' as nws;
 import 'package:weather_app/main_page.dart';
-
-const latX = 43.6969;
-const latY = -84.3056;
 
 void main() async {
   runApp(const AppRoot());
@@ -22,6 +20,7 @@ class AppRoot extends StatelessWidget {
         theme: ThemeData.from(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.purple),
         ),
+        title: "Weather",
         home: Scaffold(body: MainPage()),
       ),
     );
@@ -30,17 +29,36 @@ class AppRoot extends StatelessWidget {
 
 class AppState extends ChangeNotifier {
   AppState() {
-    nws.getGridFromPoint(latX, latY).then((final gridInfo) async {
-      gridX = gridInfo.gridX;
-      gridY = gridInfo.gridY;
-      officeID = gridInfo.officeID;
+    getGeolocation()
+        .then((final pos) async {
+          geoLoc = pos;
 
-      gridWeather = await nws.getGridWeather(gridX!, gridY!, officeID!);
-      notifyListeners();
-    });
+          final gridInfo = await nws
+              .getGridFromPoint(geoLoc!.latitude, geoLoc!.longitude)
+              .catchError((err, stack) {
+                throw "$err$stack";
+              });
+          gridX = gridInfo.gridX;
+          gridY = gridInfo.gridY;
+          officeID = gridInfo.officeID;
+
+          gridWeather = await nws
+              .getGridWeather(gridX!, gridY!, officeID!)
+              .catchError((err, stack) {
+                throw "$err$stack";
+              });
+          notifyListeners();
+        })
+        .catchError((err, stack) {
+          errorMsg = "$err$stack";
+          notifyListeners();
+        });
   }
 
+  Position? geoLoc;
   int? gridX, gridY;
   String? officeID;
   GridWeatherInfo? gridWeather;
+
+  String? errorMsg;
 }
