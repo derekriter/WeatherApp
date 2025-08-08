@@ -20,6 +20,7 @@ class LocationHeader extends StatelessWidget {
 
     return Container(
       color: Colors.blue.shade300,
+      padding: EdgeInsets.symmetric(vertical: 48),
       child: ClipRect(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

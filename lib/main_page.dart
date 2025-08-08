@@ -20,10 +20,10 @@ class MainPage extends StatelessWidget {
     if (appState.gridWeather == null) {
       return Center(child: Text("Loading"));
     }
+
     if (appState.gridWeather!.temperature == null) {
       return Text("No temperature data");
     }
-
     final temperatureWidget = Row(
       spacing: 15,
       children: [
@@ -49,23 +49,15 @@ class MainPage extends StatelessWidget {
       ],
     );
 
-    return Column(
+    return ListView(
       children: [
-        Expanded(flex: 1, child: LocationHeader()),
-        Expanded(
-          flex: 2,
-          child: Column(
-            children: [
-              CurrentWeather(),
-              Text(
-                "${appState.geoLoc!.latitude}, ${appState.geoLoc!.longitude}",
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: temperatureWidget,
-              ),
-            ],
-          ),
+        LocationHeader(),
+        CurrentWeather(),
+        Divider(),
+        Text("${appState.geoLoc!.latitude}, ${appState.geoLoc!.longitude}"),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: temperatureWidget,
         ),
       ],
     );
