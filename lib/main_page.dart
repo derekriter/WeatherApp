@@ -21,9 +21,6 @@ class MainPage extends StatelessWidget {
       return Center(child: Text("Loading"));
     }
 
-    if (appState.gridWeather!.temperature == null) {
-      return Text("No temperature data");
-    }
     final temperatureWidget = Row(
       spacing: 15,
       children: [
@@ -36,11 +33,13 @@ class MainPage extends StatelessWidget {
             return Column(
               children: [
                 Text(
-                  findValueFromTimedData(
-                        appState.gridWeather!.temperature!,
-                        Time(date),
-                      )?.fahrenheitString() ??
-                      "?",
+                  appState.gridWeather!.temperature == null
+                      ? "null"
+                      : (findValueFromTimedData(
+                            appState.gridWeather!.temperature!,
+                            Time(date),
+                          )?.fahrenheitString() ??
+                          "?"),
                 ),
                 Text(DateFormat.j().format(date)),
               ],
@@ -53,8 +52,10 @@ class MainPage extends StatelessWidget {
       children: [
         LocationHeader(),
         CurrentWeather(),
-        Divider(),
-        Text("${appState.geoLoc!.latitude}, ${appState.geoLoc!.longitude}"),
+        Divider(height: 1, thickness: 1),
+        Text(
+          "${appState.geoLoc?.latitude ?? "null"}, ${appState.geoLoc?.longitude ?? "null"}",
+        ),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: temperatureWidget,

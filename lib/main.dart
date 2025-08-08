@@ -50,7 +50,23 @@ class AppState extends ChangeNotifier {
           notifyListeners();
         })
         .catchError((err, stack) {
-          errorMsg = "$err$stack";
+          // errorMsg = "$err$stack";
+          geoLoc = null;
+          gridX = null;
+          gridY = null;
+          officeID = null;
+          gridWeather = (
+            temperature: null,
+            dewpoint: null,
+            maxTemperature: null,
+            minTemperature: null,
+            relativeHumidity: null,
+            apparentTemperature: null,
+            skyCover: null,
+            windDirection: null,
+            windSpeed: null,
+            windGust: null,
+          );
           notifyListeners();
         });
   }
