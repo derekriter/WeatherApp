@@ -22,58 +22,58 @@ class _CurrentWeatherState extends State<CurrentWeather>
 
     return ConstrainedBox(
       constraints: BoxConstraints.loose(Size.fromHeight(250)),
-      child: Padding(
-        padding: const EdgeInsets.only(left: 5, bottom: 5, right: 5),
-        child: Row(
-          spacing: 5,
-          children: [
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: TabBarView(
-                  controller: tabController,
-                  children: [
-                    _CommonDisplay(largeData: largeData, smallData: smallData),
-                    _AirDisplay(largeData: largeData, smallData: smallData),
-                    Placeholder(),
-                    Placeholder(),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 3,
-              child: Column(
+      child: Row(
+        spacing: 5,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: TabBarView(
+                controller: tabController,
+                physics:
+                    const NeverScrollableScrollPhysics(), //dont allow swiping on view
                 children: [
-                  SizedBox(
-                    height: 30,
-                    child: TabBar.secondary(
-                      controller: tabController,
-                      tabs: [
-                        Tab(icon: Icon(Icons.thermostat_rounded, size: 30)),
-                        Tab(icon: Icon(Icons.air_rounded, size: 30)),
-                        Tab(icon: Icon(Icons.waves_rounded, size: 30)),
-                        Tab(icon: Icon(Icons.warning_rounded, size: 30)),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: tabController,
-                      children: [
-                        _CommonInfo(),
-                        _AirInfo(),
-                        _WaveInfo(),
-                        _HazardInfo(),
-                      ],
-                    ),
-                  ),
+                  _CommonDisplay(largeData: largeData, smallData: smallData),
+                  _AirDisplay(largeData: largeData, smallData: smallData),
+                  Placeholder(),
+                  Placeholder(),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 30,
+                  child: TabBar.secondary(
+                    controller: tabController,
+                    tabs: [
+                      Tab(icon: Icon(Icons.cloud_rounded, size: 30)),
+                      Tab(icon: Icon(Icons.air_rounded, size: 30)),
+                      Tab(icon: Icon(Icons.waves_rounded, size: 30)),
+                      Tab(icon: Icon(Icons.warning_rounded, size: 30)),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    controller: tabController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _CommonInfo(),
+                      _AirInfo(),
+                      _WaveInfo(),
+                      _HazardInfo(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

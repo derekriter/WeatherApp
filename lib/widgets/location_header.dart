@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/main.dart';
+import 'package:weather_app/widgets/nullable_text.dart';
 
 class LocationHeader extends StatelessWidget {
   const LocationHeader({super.key});
@@ -11,15 +13,20 @@ class LocationHeader extends StatelessWidget {
 
     final theme = Theme.of(context);
     final header = theme.textTheme.headlineLarge!.copyWith(
-      color: Colors.white,
+      color: theme.colorScheme.onPrimary,
       fontWeight: FontWeight.bold,
     );
     final details = theme.textTheme.bodyMedium!.copyWith(
-      color: Colors.blueGrey,
+      color: theme.colorScheme.onPrimary,
     );
 
+    final date = DateTime.now();
+    final timezone = date.timeZoneName;
+    final timezoneOffset = date.timeZoneOffset;
+    final doubleDigitFormatter = NumberFormat("00");
+
     return Container(
-      color: Colors.blue.shade300,
+      color: theme.colorScheme.primary,
       padding: EdgeInsets.symmetric(vertical: 48),
       child: ClipRect(
         child: Column(
@@ -27,7 +34,7 @@ class LocationHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              "City Name",
+              "City Name", //TODO process from point metadata
               textAlign: TextAlign.center,
               style: header,
               softWrap: false,
@@ -36,8 +43,11 @@ class LocationHeader extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "${appState.geoLoc?.latitude.toStringAsFixed(4) ?? "null"}°, ${appState.geoLoc?.longitude.toStringAsFixed(4) ?? "null"}° | ${appState.officeID ?? "null"}",
+                NullableText(
+                  appState.geoLoc == null
+                      ? null
+                      : "${appState.geoLoc!.latitude.toStringAsFixed(4)}°, ${appState.geoLoc!.longitude.toStringAsFixed(4)}°}",
+                  referenceData: "00.0000°, 00.0000°",
                   style: details,
                   softWrap: true,
                 ),
@@ -58,7 +68,7 @@ class LocationHeader extends StatelessWidget {
               ],
             ),
             Text(
-              "Time - TimeZone (UTC+/-h:mm)",
+              "$timezone (UTC${!timezoneOffset.isNegative ? "+" : ""}${doubleDigitFormatter.format(timezoneOffset.inHours)}:${doubleDigitFormatter.format(timezoneOffset.inMinutes % 60)})",
               textAlign: TextAlign.center,
               style: details,
               softWrap: true,
