@@ -46,7 +46,7 @@ class LocationHeader extends StatelessWidget {
                 NullableText(
                   appState.geoLoc == null
                       ? null
-                      : "${appState.geoLoc!.latitude.toStringAsFixed(4)}°, ${appState.geoLoc!.longitude.toStringAsFixed(4)}°}",
+                      : "${appState.geoLoc!.latitude.toStringAsFixed(4)}°, ${appState.geoLoc!.longitude.toStringAsFixed(4)}°",
                   referenceData: "00.0000°, 00.0000°",
                   style: details,
                   softWrap: true,
